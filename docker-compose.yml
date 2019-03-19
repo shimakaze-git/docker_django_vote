@@ -1,0 +1,55 @@
+version: '3'
+services:
+  app:
+    restart: always
+    tty: true
+    build: ./app
+    expose:
+      - "8000"
+    depends_on:
+      - db
+    # command: gunicorn test.wsgi -b 0.0.0.0:8000
+    command: gunicorn config.wsgi -b 0.0.0.0:8000
+    volumes:
+      - ./app:/usr/src/app
+      - ./app/static/:/usr/src/app/static
+    env_file:
+      - ./envs/db.env
+    # networks:
+    #   - django_vote
+
+  nginx:
+    restart: always
+    tty: true
+    image: nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - "./nginx/:/etc/nginx/"
+      - /app/static
+    depends_on:
+      - app
+    # networks:
+    #   - django_vote
+
+  db:
+    restart: always
+    tty: true
+    build: ./mysql
+    ports:
+      - 3306:3306
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - "./mysql/conf.d:/etc/mysql/conf.d"
+    env_file:
+      - ./envs/db.env
+    # networks:
+    #   - django_vote
+
+volumes:
+  mysql_data:
+    driver: local
+
+# networks:
+#   django_vote:
+#     driver: bridge

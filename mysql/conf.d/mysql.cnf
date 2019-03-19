@@ -1,0 +1,9 @@
+[mysqld] # mysql Server Setting
+default-authentication-plugin=mysql_native_password
+
+collation-server=utf8mb4_ja_0900_as_cs_ks
+character-set-server=utf8mb4
+default-time-zone='Asia/Tokyo'
+
+[client]  # mysql Client Setting
+default-character-set=utf8mb4

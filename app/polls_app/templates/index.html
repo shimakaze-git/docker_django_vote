@@ -1,0 +1,9 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'polls/css/style.css' %}">
+
+<h1>{{ request.site }}</h1>
+<ul>
+    <li>
+        <a href="{% url 'polls:index' %}">test</a>
+    </li>
+</ul>
