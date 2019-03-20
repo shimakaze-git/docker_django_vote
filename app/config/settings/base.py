@@ -28,7 +28,6 @@ SECRET_KEY = '*t+##yrkx(i%bjtlk8=!fl7pah7bjqtb!umdn81%)5#+&ei+c('
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# ALLOWED_HOSTS = []
 ALLOWED_HOSTS = ["localhost", "*"]
 
 URL_ROOT = "/"
@@ -84,7 +83,6 @@ TEMPLATES = [
         ],
 
         'APP_DIRS': True,
-        # 'APP_DIRS': False,
         'OPTIONS': {
             'context_processors': [
                 'config.settings.context_processors.common_variables',
@@ -158,6 +156,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'polls_app/static')
 ]
