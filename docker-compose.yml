@@ -43,19 +43,15 @@ services:
       # - django_vote
 
   db:
-    # build: ./mysql
-    image: mysql
+    build: ./mysql
     container_name: vote_db
     restart: always
     tty: true
     ports:
       - 3306:3306
-    environment:
-      MYSQL_ROOT_PASSWORD: mysitepass
-      TZ: 'Asia/Tokyo'
-    # volumes:
-    #   - mysql_data:/var/lib/mysql
-    #   - "./mysql/conf.d:/etc/mysql/conf.d"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - "./mysql/conf.d:/etc/mysql/conf.d"
     env_file:
       - ./envs/db.env
     networks:
