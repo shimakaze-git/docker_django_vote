@@ -1,5 +1,4 @@
-FROM mysql:latest
-# FROM mysql/mysql-server:5.7
+FROM mysql
 
 RUN apt-get clean && apt-get update && apt-get install -y locales locales-all
 
