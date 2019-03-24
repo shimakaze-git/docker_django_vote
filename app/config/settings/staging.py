@@ -1,6 +1,6 @@
 from os import environ
 
-from .base import *  # noqa
+from .base import *
 INSTALLED_APPS += ['django_extensions']
 
 # DEBUG
