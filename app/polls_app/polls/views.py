@@ -1,19 +1,15 @@
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.template import loader
+# from django.template import loader
 from django.urls import reverse
 from django.views import generic
 from django.utils import timezone
 # Create your views here.
 
+from .forms import PollsDetailForm, PollsVoteForm
 from .models import Choice, Question
 
-
 from django.db.models import Avg, Max, Min
-
-
-# class QuestionList(generic.ListView):
-#     model = Question
 
 
 class IndexView(generic.ListView):
@@ -31,87 +27,133 @@ class IndexView(generic.ListView):
         ).order_by('-pub_date')[:5]
 
 
-class DetailView(generic.DetailView):
+class PollsDetailView(generic.DetailView):
     model = Question
     template_name = 'polls/detail.html'
+    form_class = PollsDetailForm
 
     # questionにQuestionの結果が渡される
-
     def get_queryset(self):
         """
         Excludes any questions that aren't published yet.
         """
+        form = self.form_class(self.kwargs)
+        if form.is_valid():
+            value = list(form.data.values())[0]
+
+            # questions = Question.objects.filter(
+            #     pk=value,
+            #     pub_date__lte=timezone.now()
+            # )
+
+            # if not questions:
+            #     raise Http404("Question does not exist")
+
+            try:
+                Question.objects.get(
+                    pk=value,
+                    pub_date__lte=timezone.now()
+                )
+            except Question.DoesNotExist:
+                raise Http404("Question does not exist")
+
         return Question.objects.filter(pub_date__lte=timezone.now())
 
+    def post(self, request, *args, **kwargs):
+        detail_form = PollsDetailForm(kwargs)
 
-class ResultsView(generic.DetailView):
+        if detail_form.is_valid():
+            vote_form = PollsVoteForm(request.POST)
+            question = get_object_or_404(Question, pk=kwargs['pk'])
+
+            if vote_form.is_valid():
+                try:
+                    selected_choice = question.choice_set.get(
+                        pk=request.POST['choice']
+                    )
+                except (KeyError, Choice.DoesNotExist):
+                    # request.POST['choice'] は KeyError を送出
+                    return render(request, 'polls/detail.html', {
+                        'question': question,
+                        'error_message': "You didn't select a choice.",
+                    })
+                else:
+                    selected_choice.votes += 1
+                    selected_choice.save()
+
+                    return HttpResponseRedirect(
+                        reverse('polls:results', args=(question.id,))
+                    )
+            else:
+                error_message = "choice is not in the correct format."
+                return render(
+                    request,
+                    'polls/detail.html', {
+                        'question': question,
+                        'error_message': error_message
+                    }
+                )
+        else:
+            raise Http404("Question does not exist")
+
+
+class PollsResultsView(generic.DetailView):
     model = Question
     template_name = 'polls/results.html'
+    form_class = PollsDetailForm
 
-    # questionにQuestionの結果が渡される
+    def get_context_data(self, **kwargs):
+        context = super(PollsResultsView, self).get_context_data(**kwargs)
 
+        form = self.form_class(self.kwargs)
+        if form.is_valid():
+            try:
+                # questions
+                questions = get_object_or_404(
+                    Question,
+                    pk=self.kwargs['pk'],
+                    pub_date__lte=timezone.now()
+                )
+                context['question'] = questions
 
-def index(request):
-    latest_question_list = Question.objects.order_by('-pub_date')[:5]
-    output = ', '.join([q.question_text for q in latest_question_list])
+                # max, min, avg
+                context['max'] = Choice.objects.aggregate(
+                    Max('votes')
+                )['votes__max']
+                context['min'] = Choice.objects.aggregate(
+                    Min('votes')
+                )['votes__min']
+                context['avg'] = Choice.objects.aggregate(
+                    Avg('votes')
+                )['votes__avg']
+            except Question.DoesNotExist as e:
+                # raise Http404(e)
+                raise Exception(e)
 
-    template = loader.get_template('polls/index.html')
-    context = {
-        'latest_question_list': latest_question_list,
-    }
-
-    # return HttpResponse(template.render(context, request))
-    # return HttpResponse(output)
-    return render(request, 'polls/index.html', context)
-
-
-def detail(request, question_id):
-    question = get_object_or_404(Question, pk=question_id)
-    # try:
-    #     question = Question.objects.get(pk=question_id)
-    # except Question.DoesNotExist:
-    #     raise Http404("Question does not exist")
-
-    return render(request, 'polls/detail.html', {'question': question})
-    # return HttpResponse("You're looking at question %s." % question_id)
-
-
-def results(request, question_id):
-    question = get_object_or_404(Question, pk=question_id)
-
-    max = Choice.objects.aggregate(Max('votes'))['votes__max']
-    min = Choice.objects.aggregate(Min('votes'))['votes__min']
-    avg = Choice.objects.aggregate(Avg('votes'))['votes__avg']
-
-    return render(
-        request,
-        'polls/results.html',
-        {
-            'question': question,
-            'max': max,
-            'min': min,
-            'avg': avg
-        }
-    )
+        return context
 
 
-def vote(request, question_id):
-    question = get_object_or_404(Question, pk=question_id)
+# def vote(request, question_id):
+#     question = get_object_or_404(Question, pk=question_id)
 
-    try:
-        selected_choice = question.choice_set.get(
-            pk=request.POST['choice']
-        )
-    except (KeyError, Choice.DoesNotExist):
-        # request.POST['choice'] は KeyError を送出
-        return render(request, 'polls/detail.html', {
-            'question': question,
-            'error_message': "You didn't select a choice.",
-        })
-    else:
-        selected_choice.votes += 1
-        selected_choice.save()
+#     try:
+#         form = PollsVoteForm(request.POST)
+#         print(form.is_valid())
+#         selected_choice = question.choice_set.get(
+#             pk=request.POST['choice']
+#         )
+#         print(request.POST)
+#         print(selected_choice)
+#     except (KeyError, Choice.DoesNotExist):
+#         # request.POST['choice'] は KeyError を送出
+#         return render(request, 'polls/detail.html', {
+#             'question': question,
+#             'error_message': "You didn't select a choice.",
+#         })
+#     else:
+#         selected_choice.votes += 1
+#         selected_choice.save()
 
-        return HttpResponseRedirect(
-            reverse('polls:results', args=(question.id,))
-        )
+#         return HttpResponseRedirect(
+#             reverse('polls:results', args=(question.id,))
+#         )
