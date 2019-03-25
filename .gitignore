@@ -106,3 +106,6 @@ venv.bak/
 
 # mysql data_dir
 data_dir
+
+# node_modules
+node_modules
