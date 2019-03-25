@@ -43,6 +43,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',  # 静的ファイルの管理フレームワーク
     'django.contrib.sites',  # 1つのウェブサイトに1つのSiteデータが割り当て
 
+    # webpack_loader
+    'webpack_loader',
+
     # 'polls_app.polls',
     'polls_app.polls.apps.PollsConfig',
 
@@ -170,3 +173,11 @@ SITE_AUTHOR = 'shimakaze-git'
 
 # サイトマップフレームワークで使う変数
 SITE_ID = 1
+
+# WEBPACK_LOADER
+WEBPACK_LOADER = {
+    'DEFAULT': {
+        'BUNDLE_DIR_NAME': 'bundles/',
+        'STATS_FILE': os.path.join(BASE_DIR, 'webpack-stats.json'),
+    }
+}
